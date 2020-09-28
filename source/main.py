@@ -4,6 +4,8 @@ from sklearn.svm import LinearSVR
 from helpers import svr_results, plot_c
 import pandas as pd
 import numpy as np
+import pickle
+import joblib
 
 def svr(X_train, y_train, X_test, y_test, eps=0.01):
     c_space = np.linspace(0.01, 10)
@@ -17,7 +19,7 @@ def svr(X_train, y_train, X_test, y_test, eps=0.01):
         
         test_mae = mean_absolute_error(y_test, varied_svr.predict(X_test))
         test_mae_list.append(test_mae)
-        
+        import joblib
         perc_within_eps = 100*np.sum(abs(y_test-varied_svr.predict(X_test)) <= eps) / len(y_test)
         perc_within_eps_list.append(perc_within_eps)
 
@@ -30,6 +32,8 @@ def svr(X_train, y_train, X_test, y_test, eps=0.01):
     svr_best_C = LinearSVR(epsilon=eps, C=C, fit_intercept=True)
     svr_best_C.fit(X_train, y_train)
     svr_results(y_test, X_test, svr_best_C, eps)
+
+    return svr_best_C
 
 
 if __name__ == "__main__":
@@ -45,6 +49,11 @@ if __name__ == "__main__":
     del data['std_arousal']
 
     X_train, X_test, y_train, y_test = train_test_split(data, Y_arousal, test_size=0.2, random_state=12)
+    arousalSVR = svr(X_train, y_train, X_test, y_test, 0.1)
 
-    svr(X_train, y_train, X_test, y_test, 0.1)
+    X_train, X_test, y_train, y_test = train_test_split(data, Y_valence, test_size=0.2, random_state=12)
+    valenceSVR = svr(X_train, y_train, X_test, y_test, 0.1)
+    
+    _ = joblib.dump(arousalSVR, './models/arousal.pkl', compress=9)
+    _ = joblib.dump(valenceSVR, './models/valence.pkl', compress=9)
 
