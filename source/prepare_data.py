@@ -33,7 +33,7 @@ def transform(directory, datasetName, getSpecto=None):
     for filename in os.listdir('../clips'):
         # LOad song
         songname = f'../clips/{filename}'
-        y, sr = librosa.load(songname, mono=True, duration=5)
+        y, sr = librosa.load(songname, mono=True, res_type='kaiser_fast')
         # Get spectogram
         if getSpecto:
             plt.specgram(y, NFFT=2048, Fs=2, Fc=0, noverlap=128, cmap=cmap, sides='default', mode='default', scale='dB')
@@ -60,15 +60,16 @@ def transform(directory, datasetName, getSpecto=None):
 def merge(targets, features):
     f = pd.read_csv(features)
     t = pd.read_csv(targets)
-    t['arousal_scaled'] = t['mean_arousal'] / 9
-    t['valence_scaled'] = t['mean_valence'] / 9
+    t['arousal_scaled'] = (t['mean_arousal'] - 1) / 8
+    t['valence_scaled'] = (t['mean_valence'] - 1) / 8
     f['song_id'] = f['filename'].str[:-4].astype(int)
     full = t.merge(f, on='song_id', how='left')
     del full['filename']
     del full['mean_valence']
     del full['mean_arousal']
     del full['label']
-    full.to_pickle('final')
+    full.to_pickle('final2x')
 
 if __name__ == "__main__":
     merge('../Annotations/static_annotations.csv', 'dataset.csv')
+    #data[((data['valence_scaled']>0.45) & (data['valence_scaled']<0.55)) | ((data['arousal_scaled']>0.45) & (data['arousal_scaled']<0.55))]

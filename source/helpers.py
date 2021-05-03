@@ -35,3 +35,13 @@ def plot_c(c_space, perc_within_eps_list, test_mae_list):
 
 
     plt.show()
+
+def get_class(valence, arousal):
+    if valence > 0.5: 
+        if arousal > 0.5:
+            return 'happy/excited'
+        return 'relaxed'
+    if arousal > 0.5:
+        return 'angry'
+    return 'bored'
+
