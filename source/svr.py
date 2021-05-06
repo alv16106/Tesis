@@ -37,7 +37,7 @@ def svr(X_train, y_train, X_test, y_test, eps=0.01):
 
 
 if __name__ == "__main__":
-    data = pd.read_pickle('final2')
+    data = pd.read_pickle('fixed')
 
     Y_arousal = data['arousal_scaled']
     Y_valence = data['valence_scaled']

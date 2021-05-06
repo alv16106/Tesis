@@ -130,6 +130,7 @@ dmypy.json
 
 # datasets
 clips/
+clipswav/
 Annotations/
 Features/
 img_data/

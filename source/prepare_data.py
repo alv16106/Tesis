@@ -8,6 +8,7 @@ import pathlib
 import csv
 from sklearn import preprocessing
 import warnings
+from helpers import get_class
 # 44100 hrtz
 
 warnings.filterwarnings('ignore')
@@ -28,12 +29,15 @@ def transform(directory, datasetName, getSpecto=None):
     cmap = plt.get_cmap('inferno')
     plt.figure(figsize=(8,8))
     pathlib.Path('../img_data').mkdir(parents=True, exist_ok=True)
+    i = 0;
 
     # go for it
-    for filename in os.listdir('../clips'):
+    for filename in os.listdir('../clipswav'):
         # LOad song
-        songname = f'../clips/{filename}'
-        y, sr = librosa.load(songname, mono=True, res_type='kaiser_fast')
+        songname = f'../clipswav/{filename}'
+        print('Loading', songname)
+        y, sr = librosa.load(str(songname), res_type='kaiser_fast')
+        print('Loaded', i)
         # Get spectogram
         if getSpecto:
             plt.specgram(y, NFFT=2048, Fs=2, Fc=0, noverlap=128, cmap=cmap, sides='default', mode='default', scale='dB')
@@ -48,9 +52,11 @@ def transform(directory, datasetName, getSpecto=None):
         rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
         zcr = librosa.feature.zero_crossing_rate(y)
         mfcc = librosa.feature.mfcc(y=y, sr=sr)
-        to_append = f'{filename} {np.mean(chroma_stft)} {np.mean(rmse)} {np.mean(spec_cent)} {np.mean(spec_bw)} {np.mean(rolloff)} {np.mean(zcr)}'    
+        to_append = f'{filename} {np.mean(chroma_stft)} {np.mean(rmse)} {np.mean(spec_cent)} {np.mean(spec_bw)} {np.mean(rolloff)} {np.mean(zcr)}'
         for e in mfcc:
             to_append += f' {np.mean(e)}'
+        i +=1;
+        print(i)
         file = open(datasetName, 'a', newline='')
         with file:
             writer = csv.writer(file)
@@ -60,16 +66,18 @@ def transform(directory, datasetName, getSpecto=None):
 def merge(targets, features):
     f = pd.read_csv(features)
     t = pd.read_csv(targets)
-    t['arousal_scaled'] = (t['mean_arousal'] - 1) / 8
-    t['valence_scaled'] = (t['mean_valence'] - 1) / 8
+    t['arousal_scaled'] = (t['mean_arousal'] - 5) / 4
+    t['valence_scaled'] = (t['mean_valence'] - 5) / 4
+    t['emotion'] = t.apply(lambda row: get_class(row.valence_scaled, row.arousal_scaled), axis = 1)
     f['song_id'] = f['filename'].str[:-4].astype(int)
     full = t.merge(f, on='song_id', how='left')
     del full['filename']
     del full['mean_valence']
     del full['mean_arousal']
     del full['label']
-    full.to_pickle('final2x')
+    full.to_pickle('fixed')
 
 if __name__ == "__main__":
-    merge('../Annotations/static_annotations.csv', 'dataset.csv')
+    transform('directory', 'newData.csv')
+    merge('../Annotations/static_annotations.csv', 'newData.csv')
     #data[((data['valence_scaled']>0.45) & (data['valence_scaled']<0.55)) | ((data['arousal_scaled']>0.45) & (data['arousal_scaled']<0.55))]
