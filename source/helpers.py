@@ -1,6 +1,8 @@
 from sklearn.metrics import mean_absolute_error 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sn
 
 def svr_results(y_test, X_test, fitted_svr_model, eps):
     
@@ -44,4 +46,11 @@ def get_class(valence, arousal):
     if arousal > 0:
         return 'angry'
     return 'bored'
+
+def print_confusion(yp, yr, save=False, filename=''):
+    confusion_matrix = pd.crosstab(yr, yp, rownames=['Actual'], colnames=['Predicted'])
+    plot = sn.heatmap(confusion_matrix, annot=True)
+
+    if save:
+        plot.figure.savefig(filename)
 

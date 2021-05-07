@@ -10,6 +10,8 @@ import pandas as pd
 import librosa
 import matplotlib.pyplot as plt
 
+from helpers import print_confusion
+
 
 def new_neural(dataset):
     data = pd.read_pickle(dataset)
@@ -35,9 +37,9 @@ def new_neural(dataset):
     num_features = 26
     def build_model_graph():
         model = Sequential()
-        model.add(Dense(100, input_dim=num_features, activation='relu'))
+        model.add(Dense(64, input_dim=num_features, activation='relu'))
         model.add(Dropout(0.2))
-        model.add(Dense(160, activation='relu'))
+        model.add(Dense(128, activation='relu'))
         model.add(Dropout(0.2))
         model.add(Dense(num_labels, activation='softmax'))
         # Compile the model
@@ -64,6 +66,15 @@ def new_neural(dataset):
     plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
     model.save("neuralnet2.h5")
 
+    predictions = np.argmax(model.predict(x_test), axis=-1)
+    expected = np.argmax(y_test, axis=1)
+
+    print_confusion(predictions, expected, True, 'matrixes/neuralnetConfusion.png')
+
+    return model
+
 
 if __name__ == "__main__":
-    new_neural('fixed')
+    model = new_neural('fixed')
+    #argmax from numpy to de-hotencode
+

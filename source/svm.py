@@ -1,8 +1,10 @@
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
-from sklearn.svm import SVR, SVC
+from sklearn.svm import SVR, SVC, LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
+from sklearn.metrics import plot_confusion_matrix
+import matplotlib.pyplot as plt
 
 from keras.utils import np_utils
 
@@ -23,12 +25,13 @@ def svm(dataset):
 
     del data['emotion']
 
-    yy, _ = pd.factorize(y)
+    yy, class_names = pd.factorize(y)
     x_train, x_test, y_train, y_test = train_test_split(data, yy, test_size=0.2, random_state = 203)
 
-    param_grid = {'svc__C': np.logspace(-5, 7, 20)}
 
-    clf = make_pipeline(StandardScaler(), SVC(kernel= "rbf", gamma='scale'))
+    param_grid = {'linearsvc__C': np.logspace(-5, 7, 20)}
+
+    clf = make_pipeline(StandardScaler(), LinearSVC())
 
     # Búsqueda por validación cruzada
     # ==============================================================================
@@ -38,29 +41,35 @@ def svm(dataset):
             scoring    = 'accuracy',
             n_jobs     = -1,
             cv         = 3, 
-            verbose    = 0,
+            verbose    = 1,
             return_train_score = True
         )
     _ = grid.fit(X = x_train, y = y_train)
 
     # Resultados del grid
     # ==============================================================================
-    resultados = pd.DataFrame(grid.cv_results_)
-    resultados.filter(regex = '(param.*|mean_t|std_t)')\
+    results = pd.DataFrame(grid.cv_results_)
+    results.filter(regex = '(param.*|mean_t|std_t)')\
         .drop(columns = 'params')\
         .sort_values('mean_test_score', ascending = False) \
         .head(5)
 
-
-
-    # Mejores hiperparámetros por validación cruzada
-    # ==============================================================================
-    print("----------------------------------------")
-    print("Mejores hiperparámetros encontrados (cv)")
-    print("----------------------------------------")
     print(grid.best_params_, ":", grid.best_score_, grid.scoring)
 
-    modelo = grid.best_estimator_
+    model = grid.best_estimator_
+
+    disp = plot_confusion_matrix(model, x_test, y_test,
+                                 display_labels=class_names,
+                                 cmap=plt.cm.Blues,
+                                 normalize='true')
+    disp.ax_.set_title('SVC')
+
+    print('SVC')
+    print(disp.confusion_matrix)
+
+    plt.show()
+
+    return model
 
 if __name__ == "__main__":
     svm('fixed')
